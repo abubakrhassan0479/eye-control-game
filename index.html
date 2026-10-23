@@ -4,455 +4,373 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Red Civic Driving Simulator</title>
+<title>City Drive 3D</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;overflow:hidden;background:#111;color:white;font-family:Arial,sans-serif;touch-action:none}
-#scene{position:fixed;inset:0;width:100%;height:100%}
-#hud{position:fixed;inset:0;pointer-events:none}
-.top{display:flex;justify-content:space-between;padding:9px;align-items:flex-start}
-.panel{background:#111b26e8;border:1px solid #697887;border-radius:12px;padding:8px 11px;text-align:center}
-.small{font-size:10px;color:#c3d0dc}
-#speed{font-size:25px;color:#fff;font-weight:bold}
-#rpm{font-size:14px;color:#ffb34e}
-#mirror{width:145px;height:48px;background:#222;border:4px solid #555;border-radius:8px;display:block}
-#mirrorWrap{position:absolute;top:9px;left:50%;transform:translateX(-50%);text-align:center}
-#mirrorLabel{font-size:9px;color:#fff;background:#222b;padding:2px}
-#dashboard{position:absolute;bottom:0;width:100%;height:34%;min-height:180px;background:linear-gradient(#222d,#090d14 24%,#171c25 80%);border-top:3px solid #525a64;border-radius:24px 24px 0 0;pointer-events:auto;padding:8px 10px calc(8px + env(safe-area-inset-bottom))}
-.dashrow{display:flex;align-items:center;justify-content:space-around;gap:8px;height:100%}
-#steer{width:112px;height:112px;max-width:28vw;max-height:28vw;border:10px solid #161719;border-radius:50%;background:radial-gradient(circle,#292d33 0 22%,#08090b 24% 31%,transparent 33%),conic-gradient(#292c31,#555,#17191c,#555,#292c31);box-shadow:0 0 0 2px #666;position:relative;touch-action:none;flex-shrink:0}
-#steer:before,#steer:after{content:"";position:absolute;background:#222;border:2px solid #666;border-radius:4px}
-#steer:before{width:72%;height:11px;left:14%;top:46%}
-#steer:after{width:10px;height:45%;left:45%;top:50%}
-#horn{position:absolute;left:34%;top:33%;width:32%;height:32%;border-radius:50%;background:#151719;border:2px solid #555;z-index:2}
-.pedalarea{display:flex;gap:6px;align-items:end}
-.pedal{width:49px;height:75px;border-radius:9px;border:2px solid #6c727a;background:repeating-linear-gradient(0deg,#272c32 0 6px,#424750 7px 9px);color:white;font-size:10px;font-weight:bold;touch-action:none}
-.pedal:active{background:#686d74}
-#brake{height:65px}
-#handbrake{width:42px;height:52px;background:#30343a;border:2px solid #727880;border-radius:8px;color:white;font-size:10px}
-#gear{width:54px;height:100px;background:linear-gradient(90deg,#191c21,#343a43,#171a20);border:2px solid #555;border-radius:13px;display:flex;flex-direction:column;justify-content:space-around;align-items:center;padding:4px}
-.gear{background:#20252c;color:#ddd;border:1px solid #4d535a;border-radius:5px;width:36px;height:19px;font-weight:bold;font-size:11px;padding:0}
-.gear.active{background:#e8e8e8;color:#111;border-color:white}
-#ignition{border-radius:50%;width:43px;height:43px;background:radial-gradient(circle,#545b65,#111);border:3px solid #666;color:#fff;font-size:9px;font-weight:bold}
-#ignition.on{color:#72ffc2;border-color:#72ffc2}
-#startOverlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#09111acc;z-index:5}
-#startCard{width:min(88%,330px);padding:22px;background:#151e2b;border:1px solid #bd252d;border-radius:20px;text-align:center}
-h2{color:#ff4b52;margin:5px}
-select, .mainbtn{width:100%;padding:12px;margin-top:9px;border-radius:10px;border:1px solid #697887;background:#222d3b;color:white;font-size:15px}
-.mainbtn{background:#c91f2a;border:0;font-weight:bold}
-#message{font-size:12px;color:#ffd27b;min-height:18px}
-#gearLabel{font-size:11px;color:#9fe6ff}
+body{margin:0;overflow:hidden;background:#8ac7ed;color:white;font-family:Arial;touch-action:none}
+#world{position:fixed;inset:0;width:100%;height:100%}
+#overlay{position:fixed;inset:0;background:#101722dd;display:flex;align-items:center;justify-content:center;z-index:5}
+#card{background:#172231;border:2px solid #e52b37;border-radius:18px;padding:22px;width:88%;max-width:340px;text-align:center}
+h2{color:#ff4651}
+button,select{border:0;border-radius:10px;padding:12px;font-weight:bold}
+#enter{width:100%;background:#e52b37;color:white;font-size:18px;margin-top:12px}
+#status{color:#ffe18c;font-size:13px}
+#top{position:fixed;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;pointer-events:none}
+.info{background:#111d2bdf;border:1px solid #8593a1;border-radius:10px;padding:8px;text-align:center;font-size:11px}
+.info b{font-size:22px;color:#72ffc5}
+#rear{position:fixed;top:8px;left:50%;transform:translateX(-50%);width:130px;height:42px;border:3px solid #535b66;border-radius:7px;background:#8ab2b9}
+#rearLabel{position:fixed;top:53px;left:50%;transform:translateX(-50%);font-size:9px;background:#111b;color:white;padding:2px 5px}
+#dashboard{position:fixed;bottom:0;left:0;width:100%;height:32%;min-height:175px;background:linear-gradient(#424750,#11151c 30%);border-top:4px solid #737a83;border-radius:22px 22px 0 0;padding:8px 7px}
+#row{display:flex;align-items:center;justify-content:space-around;gap:5px;height:100%}
+#steer{width:100px;height:100px;border-radius:50%;border:11px solid #292d32;background:radial-gradient(circle,#454b53 0 23%,#121418 25% 36%,#343940 38%);box-shadow:0 0 0 2px #777;position:relative;flex-shrink:0;touch-action:none}
+#steer:before{content:"";position:absolute;top:43%;left:0;width:100%;height:10px;background:#17191d}
+#steer:after{content:"";position:absolute;top:44%;left:45%;width:10px;height:45%;background:#17191d}
+#horn{position:absolute;left:30%;top:28%;width:40%;height:40%;background:#191c21;border:2px solid #777;border-radius:50%;z-index:1}
+.label{font-size:9px;color:#d7dce2;text-align:center;margin-top:5px}
+.pedals{display:flex;align-items:end;gap:5px}
+.pedal{width:48px;height:70px;border:2px solid #81878f;color:white;background:repeating-linear-gradient(0deg,#252a30 0 6px,#555a61 7px 9px);font-size:10px;touch-action:none}
+#brake{height:61px}
+#gas{background:repeating-linear-gradient(0deg,#1c4037 0 6px,#387565 7px 9px)}
+#gears{display:flex;flex-direction:column;gap:3px;background:#191e25;padding:5px;border-radius:9px}
+.gear{padding:5px;width:34px;background:#303740;color:white}
+.gear.active{background:#fff;color:#111}
+#ignition,#park{width:46px;height:42px;border-radius:50%;font-size:9px;background:#242a33;color:white;border:2px solid #7c8794}
+#ignition.on{border-color:#6fffc4;color:#6fffc4}
 @media(max-height:650px){
- #dashboard{height:31%;min-height:145px}
- #steer{width:90px;height:90px}
- .pedal{height:61px;width:42px}
- #brake{height:54px}
- #gear{height:83px}
- #mirror{height:38px}
+ #dashboard{height:29%;min-height:145px}
+ #steer{width:78px;height:78px}
+ .pedal{height:54px;width:38px}
+ #brake{height:47px}
+ #rear{width:105px;height:34px}
+ #rearLabel{top:45px}
 }
 </style>
 </head>
 <body>
-<canvas id="scene"></canvas>
 
-<div id="hud">
- <div class="top">
-  <div class="panel">
-   <div class="small">SPEED km/h</div>
-   <div id="speed">0</div>
-   <div id="rpm">0 RPM</div>
+<canvas id="world"></canvas>
+
+<div id="top">
+ <div class="info">SPEED<br><b id="speed">0</b><br>KM/H</div>
+ <div class="info">RPM<br><b id="rpm">800</b></div>
+ <div class="info">TRIP<br><b id="trip">0.0</b><br>KM</div>
+</div>
+
+<canvas id="rear" width="260" height="84"></canvas>
+<div id="rearLabel">REAR VIEW MIRROR</div>
+
+<div id="dashboard">
+ <div id="row">
+  <div>
+   <div id="steer"><div id="horn"></div></div>
+   <div class="label">STEERING WHEEL</div>
   </div>
-  <div class="panel">
-   <div class="small">TRIP DISTANCE</div>
-   <b id="distance">0.0 km</b>
-   <div class="small">MAX 300 km/h</div>
+  <div>
+   <div id="gears">
+    <button class="gear" data-gear="P">P</button>
+    <button class="gear" data-gear="R">R</button>
+    <button class="gear" data-gear="N">N</button>
+    <button class="gear active" data-gear="D">D</button>
+   </div>
+   <div class="label" id="gearText">DRIVE</div>
   </div>
- </div>
-
- <div id="mirrorWrap">
-  <canvas id="mirror" width="290" height="96"></canvas>
-  <div id="mirrorLabel">REAR VIEW MIRROR</div>
- </div>
-
- <div id="dashboard">
-  <div class="dashrow">
-   <div style="text-align:center">
-    <div id="steer"><div id="horn"></div></div>
-    <div class="small">STEERING</div>
-   </div>
-
-   <div style="text-align:center">
-    <div id="gear">
-     <button class="gear active" data-g="P">P</button>
-     <button class="gear" data-g="R">R</button>
-     <button class="gear" data-g="N">N</button>
-     <button class="gear" data-g="D">D</button>
-    </div>
-    <div id="gearLabel">PARK</div>
-   </div>
-
-   <div class="pedalarea">
-    <div style="text-align:center">
-     <button class="pedal" id="brake">BRAKE</button>
-     <div class="small">BRAKE</div>
-    </div>
-    <div style="text-align:center">
-     <button class="pedal" id="accelerator">▲</button>
-     <div class="small">ACCELERATOR</div>
-    </div>
-   </div>
-
-   <div style="display:flex;flex-direction:column;align-items:center;gap:9px">
-    <button id="ignition">START</button>
-    <button id="handbrake">PARK<br>BRAKE</button>
-    <div class="small">IGNITION</div>
-   </div>
+  <div class="pedals">
+   <div><button class="pedal" id="brake">BRAKE</button><div class="label">BRAKE</div></div>
+   <div><button class="pedal" id="gas">▲</button><div class="label">ACCELERATOR</div></div>
+  </div>
+  <div style="text-align:center">
+   <button id="ignition">START</button>
+   <div class="label">IGNITION</div>
+   <button id="park" style="margin-top:9px">P BRAKE</button>
+   <div class="label">HANDBRAKE</div>
   </div>
  </div>
 </div>
 
-<div id="startOverlay">
- <div id="startCard">
-  <h2>RED CIVIC DRIVE</h2>
-  <p>3D Street Driving Simulator</p>
-  <label for="carColor" class="small">CAR COLOUR</label>
-  <select id="carColor">
+<div id="overlay">
+ <div id="card">
+  <h2>🏎️ RED CIVIC DRIVE</h2>
+  <p>3D City Driving</p>
+  <select id="colour" style="width:100%">
    <option value="red">Civic Red</option>
    <option value="black">Gloss Black</option>
    <option value="white">Pearl White</option>
    <option value="blue">Sport Blue</option>
   </select>
-  <p id="message">Select your car and start the engine.</p>
-  <button class="mainbtn" id="enter">ENTER DRIVE</button>
-  <div class="small" style="margin-top:10px">Use the steering wheel and pedals below.</div>
+  <p id="status">Ready to start your engine.</p>
+  <button id="enter">ENTER DRIVE</button>
  </div>
 </div>
 
 <script type="module">
 import * as THREE from
 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
-import {RoundedBoxGeometry} from
-'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/geometries/RoundedBoxGeometry.js';
 
-const canvas=document.querySelector('#scene');
+const $=id=>document.getElementById(id);
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x91c9ed);
-scene.fog=new THREE.Fog(0x91c9ed,75,240);
+scene.background=new THREE.Color(0x91cbed);
+scene.fog=new THREE.Fog(0x91cbed,65,210);
 
-const camera=new THREE.PerspectiveCamera(68,innerWidth/innerHeight,.1,350);
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,300);
+const renderer=new THREE.WebGLRenderer({canvas:$('world'),antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
 renderer.setSize(innerWidth,innerHeight);
 renderer.shadowMap.enabled=true;
-renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 
-scene.add(new THREE.HemisphereLight(0xeaf5ff,0x3b553a,2.1));
-const sun=new THREE.DirectionalLight(0xffffff,2.6);
-sun.position.set(-20,35,15);
-sun.castShadow=true;
+scene.add(new THREE.HemisphereLight(0xffffff,0x486047,2.1));
+const sun=new THREE.DirectionalLight(0xffffff,2.3);
+sun.position.set(-10,22,10);
 scene.add(sun);
 
-const material=(color,metalness=0,roughness=.55)=>
- new THREE.MeshStandardMaterial({color,metalness,roughness});
+function mat(c,metal=0,rough=.6){
+ return new THREE.MeshStandardMaterial({color:c,metalness:metal,roughness:rough});
+}
+const grass=mat(0x43854a),roadMat=mat(0x35383e),line=mat(0xf4f0d9);
+const black=mat(0x16191e),windowMat=mat(0x244352,.2,.3);
+let paint=mat(0xc71929,.45,.25);
 
-const roadMat=material(0x34373d,0,.95);
-const grassMat=material(0x3b8242);
-const lineMat=material(0xf4f1dc);
-const chrome=material(0x858b91,.8,.24);
-const glass=material(0x193747,.35,.22);
-const rubber=material(0x15171b);
-const buildingMats=[0xb9a993,0x8798a9,0x9aada6,0x747a91,0xc4c8cb].map(c=>material(c));
-
-function box(parent,w,h,d,x,y,z,mat,round=false){
- const geo=round
-  ?new RoundedBoxGeometry(w,h,d,3,Math.min(.22,h*.35))
-  :new THREE.BoxGeometry(w,h,d);
- const o=new THREE.Mesh(geo,mat);
- o.position.set(x,y,z);
- o.castShadow=true;o.receiveShadow=true;
+function box(parent,w,h,d,x,y,z,m){
+ const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);
+ o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;
  parent.add(o);return o;
 }
 
-// Long road and roadside
-box(scene,200,.3,400,0,-.25,-150,grassMat);
-box(scene,13,.12,400,0,-.04,-150,roadMat);
-box(scene,.13,.025,400,-6.3,.035,-150,lineMat);
-box(scene,.13,.025,400,6.3,.035,-150,lineMat);
+// City and road
+box(scene,250,.4,500,0,-.3,-180,grass);
+box(scene,14,.12,500,0,-.04,-180,roadMat);
+box(scene,.14,.03,500,-6.7,.04,-180,line);
+box(scene,.14,.03,500,6.7,.04,-180,line);
 
-const roadMarks=[];
-for(let z=30;z>-400;z-=12){
- roadMarks.push(box(scene,.11,.025,5,0,.04,z,lineMat));
-}
+const marks=[];
+for(let z=30;z>-460;z-=11)
+ marks.push(box(scene,.12,.025,4,0,.04,z,line));
+
 const buildings=[];
-for(let z=25;z>-360;z-=18){
- for(const side of [-1,1]){
-  const w=4+Math.random()*4,h=7+Math.random()*19;
-  const x=side*(10+w/2);
-  const b=box(scene,w,h,7,x,h/2-0.1,z,
-   buildingMats[Math.floor(Math.random()*buildingMats.length)],true);
-  buildings.push({b,z});
-  // windows
-  const win=material(0x9ed7e9,.1,.28);
-  for(let yy=2;yy<h-1;yy+=3){
-   for(let xx=-w/2+.8;xx<w/2-.4;xx+=1.5){
-    box(scene,.7,.9,.035,x+xx,yy,z+3.52,win);
-   }
-  }
+const winMat=mat(0xa7d9e8,.1,.25);
+for(let z=25;z>-430;z-=17){
+ for(const s of [-1,1]){
+  const w=4+Math.random()*4,h=7+Math.random()*17;
+  const x=s*(10+w/2);
+  const b=box(scene,w,h,7,x,h/2-.1,z,
+   mat([0xa6aaa9,0xb9a68f,0x8998aa,0x737c87][Math.floor(Math.random()*4)]));
+  buildings.push({b});
+  for(let y=2;y<h-1;y+=2.8)
+   for(let xx=-w/2+.7;xx<w/2-.3;xx+=1.5)
+    box(scene,.65,.85,.035,x+xx,y,z+3.52,winMat);
  }
 }
 
-// Model is stylised and inspired by a modern sedan, not an official Honda asset.
-let bodyColor=0xc81927;
-let player=new THREE.Group();
-const wheelMeshes=[];
-function createCivic(color){
- const car=new THREE.Group();
- const paint=material(color,.48,.24);
+// Sedan body. Stylised Civic-like car model.
+let carX=0;
+const wheels=[];
+function makeCar(col){
+ const g=new THREE.Group();
+ paint=mat(col,.5,.22);
+ box(g,1.9,.56,4.3,0,.65,0,paint);
+ box(g,1.57,.65,2,0,1.18,-.12,paint);
+ box(g,1.43,.46,1.77,0,1.3,-.1,windowMat);
+ box(g,1.38,.12,1.9,0,1.62,-.1,paint);
 
- // Smooth, rounded sedan body
- box(car,1.85,.53,4.35,0,.68,0,paint,true);
- box(car,1.64,.22,1.2,0,.96,1.47,paint,true);
- box(car,1.6,.22,1.25,0,.95,-1.47,paint,true);
-
- // Roof and cabin
- box(car,1.38,.64,1.95,0,1.30,-.08,paint,true);
- box(car,1.29,.49,1.79,0,1.34,-.08,glass,true);
- box(car,1.39,.09,.12,0,1.69,-.08,paint,true);
-
- // Front and rear glass panels
- box(car,1.3,.42,.06,0,1.34,.84,glass,true);
- box(car,1.3,.38,.06,0,1.32,-1.0,glass,true);
-
- // Grille, bumpers, headlights
- box(car,.84,.2,.08,0,.49,2.19,chrome,true);
- box(car,.48,.12,.09,0,.49,2.25,rubber,true);
- for(const x of [-.66,.66]){
-  box(car,.38,.14,.1,x,.79,2.19,material(0xfff3cb,.15,.18),true);
-  box(car,.35,.13,.1,x,.73,-2.19,material(0xff2434),true);
-  // Mirrors
-  box(car,.23,.13,.25,x*1.45,1.16,.53,paint,true);
-  box(car,.07,.06,.18,x*1.52,1.17,.53,chrome,true);
-  // Door handles
-  box(car,.08,.045,.26,x*1.01,.82,.15,chrome,true);
-  box(car,.08,.045,.26,x*1.01,.82,-.58,chrome,true);
- }
-
- // Four detailed wheels
- for(const x of [-.96,.96]){
-  for(const z of [-1.43,1.42]){
-   const wheel=new THREE.Group();
-   wheel.position.set(x,.39,z);
-   const tire=new THREE.Mesh(
-    new THREE.CylinderGeometry(.36,.36,.19,24),rubber);
-   tire.rotation.z=Math.PI/2;
-   tire.castShadow=true;wheel.add(tire);
-   const rim=new THREE.Mesh(
-    new THREE.CylinderGeometry(.22,.22,.205,16),chrome);
-   rim.rotation.z=Math.PI/2;wheel.add(rim);
-   car.add(wheel);wheelMeshes.push(wheel);
+ for(const s of [-1,1]){
+  box(g,.35,.13,.12,s*.67,.78,-2.12,mat(0xff333b));
+  box(g,.35,.13,.12,s*.67,.8,2.12,mat(0xfff0c2));
+  box(g,.25,.14,.32,s*1.05,1.05,1.05,paint);
+  box(g,.09,.05,.19,s*1.1,1.07,1.05,mat(0xaaaaaa,.6));
+  box(g,.08,.045,.25,s*.96,.8,.3,mat(0xbfc4c9,.6));
+  for(const z of [-1.35,1.35]){
+   const wg=new THREE.Group();
+   wg.position.set(s*.97,.35,z);
+   const tire=new THREE.Mesh(new THREE.CylinderGeometry(.34,.34,.2,20),black);
+   tire.rotation.z=Math.PI/2;wg.add(tire);
+   const rim=new THREE.Mesh(new THREE.CylinderGeometry(.20,.20,.21,16),mat(0xabb1b7,.8,.25));
+   rim.rotation.z=Math.PI/2;wg.add(rim);
+   g.add(wg);wheels.push(wg);
   }
  }
- // Rear-view mirror body
- box(car,.31,.09,.08,0,1.61,.72,rubber,true);
- // Front windshield wiper detail
- box(car,.85,.025,.045,0,1.12,1.0,rubber,true);
- return car;
+ box(g,.85,.2,.09,0,.49,2.18,black);
+ box(g,.35,.12,.04,0,.5,2.24,mat(0x85898d,.6));
+ box(g,.35,.08,.06,0,1.65,.7,black);
+ return g;
 }
-player=createCivic(bodyColor);
-player.position.set(0,0,2);
+let player=makeCar(0xc71929);
+player.position.set(0,0,3);
 scene.add(player);
 
-// Traffic cars
+// Moving traffic
 const traffic=[];
-function createTraffic(color){
- const g=new THREE.Group(),paint=material(color,.35,.32);
- box(g,1.65,.55,3.5,0,.63,0,paint,true);
- box(g,1.3,.55,1.6,0,1.02,-.12,glass,true);
- for(const x of [-.84,.84]){
-  for(const z of [-1.12,1.12]){
-   const w=new THREE.Mesh(new THREE.CylinderGeometry(.29,.29,.17,16),rubber);
-   w.rotation.z=Math.PI/2;w.position.set(x,.33,z);g.add(w);
+function trafficCar(){
+ const g=new THREE.Group();
+ const c=mat([0xdfe3e7,0x232830,0x2b71bb,0xf0c83b,0xeeeeee][Math.floor(Math.random()*5)]);
+ box(g,1.6,.6,3.4,0,.62,0,c);
+ box(g,1.25,.48,1.5,0,1,-.05,windowMat);
+ for(const s of [-1,1]){
+  box(g,.3,.12,.05,s*.57,.7,1.73,mat(0xff3636));
+  for(const z of [-1,1]){
+   const tire=new THREE.Mesh(new THREE.CylinderGeometry(.27,.27,.15,12),black);
+   tire.rotation.z=Math.PI/2;tire.position.set(s*.83,.3,z*1.1);g.add(tire);
   }
-  box(g,.3,.13,.06,x*.75,.67,1.77,material(0xff3333),true);
-  box(g,.3,.13,.06,x*.75,.67,-1.77,material(0xfff2bf),true);
  }
  return g;
 }
-function spawnTraffic(){
- const lanes=[-4,0,4];
- const lane=lanes[Math.floor(Math.random()*lanes.length)];
- const colors=[0xd8dce3,0x20232a,0x2875b9,0xe3b72f,0xeeeeee];
- const car=createTraffic(colors[Math.floor(Math.random()*colors.length)]);
- car.position.set(lane,0,-130);
- scene.add(car);
- traffic.push({car,z:-130,lane});
+function spawn(){
+ const lane=[-4,0,4][Math.floor(Math.random()*3)];
+ const car=trafficCar();
+ car.position.set(lane,0,-125);
+ scene.add(car);traffic.push({car,z:-125,lane});
 }
 
-// Side mirrors use small rendered views from rear-facing cameras.
-const mirrorCanvas=document.querySelector('#mirror');
-const mirrorRenderer=new THREE.WebGLRenderer({canvas:mirrorCanvas,antialias:false});
-mirrorRenderer.setPixelRatio(1);
-mirrorRenderer.setSize(290,96,false);
-const rearCamera=new THREE.PerspectiveCamera(75,290/96,.1,200);
-rearCamera.position.set(0,2.5,5);
-rearCamera.lookAt(0,1,25);
-
-const sideCanvases=[];
-for(const side of [-1,1]){
- const c=document.createElement('canvas');
- c.width=120;c.height=54;
- c.style.cssText='position:fixed;top:76px;'+(side<0?'left:7px':'right:7px')+
- 'width:62px;height:30px;border:2px solid #60656b;border-radius:5px;background:#222';
- document.body.appendChild(c);
- const r=new THREE.WebGLRenderer({canvas:c,antialias:false});
- r.setSize(120,54,false);
- const cam=new THREE.PerspectiveCamera(78,120/54,.1,120);
- sideCanvases.push({r,cam,side});
-}
-
-let carX=0,speed=0,distance=0,rpm=0,gear='P';
-let ignition=false,driving=false,gas=false,braking=false;
-let handbrake=true,steer=0,roadOffset=0,spawnTimer=0;
-let last=performance.now();
+// State
+let speed=0,rpm=800,trip=0,gear='D';
+let ignition=false,started=false,gas=false,brake=false,handbrake=true,steer=0;
+let spawnTime=0,last=performance.now(),crashed=false;
 
 function setGear(g){
  gear=g;
  document.querySelectorAll('.gear').forEach(b=>
-  b.classList.toggle('active',b.dataset.g===g));
- document.querySelector('#gearLabel').textContent=
-  ({P:'PARK',R:'REVERSE',N:'NEUTRAL',D:'DRIVE'})[g];
+  b.classList.toggle('active',b.dataset.gear===g));
+ $('gearText').textContent=({P:'PARK',R:'REVERSE',N:'NEUTRAL',D:'DRIVE'})[g];
 }
-document.querySelectorAll('.gear').forEach(b=>{
- b.onclick=()=>setGear(b.dataset.g);
-});
+document.querySelectorAll('.gear').forEach(b=>b.onclick=()=>setGear(b.dataset.gear));
 
-document.querySelector('#ignition').onclick=()=>{
- ignition=!ignition;
- document.querySelector('#ignition').classList.toggle('on',ignition);
- document.querySelector('#ignition').textContent=ignition?'ON':'START';
- if(!ignition){speed=0;driving=false;gas=false;}
-};
-document.querySelector('#handbrake').onclick=()=>{
- handbrake=!handbrake;
- document.querySelector('#handbrake').style.borderColor=handbrake?'#ff5555':'#72ffc2';
-};
-
-document.querySelector('#carColor').onchange=e=>{
- const value=e.target.value;
- bodyColor=({red:0xc81927,black:0x15171c,white:0xe8e8e8,blue:0x1263cf})[value];
+$('colour').onchange=e=>{
  scene.remove(player);
- wheelMeshes.length=0;
- player=createCivic(bodyColor);
- player.position.set(carX,0,2);
- scene.add(player);
+ wheels.length=0;
+ const c=({red:0xc71929,black:0x17191e,white:0xe9e9e9,blue:0x1665d4})[e.target.value];
+ player=makeCar(c);player.position.set(carX,0,3);scene.add(player);
 };
 
-document.querySelector('#enter').onclick=()=>{
- document.querySelector('#startOverlay').style.display='none';
- setGear('D');handbrake=false;
- ignition=true;
- document.querySelector('#ignition').classList.add('on');
- document.querySelector('#ignition').textContent='ON';
- driving=true;
+$('enter').onclick=()=>{
+ // Start immediately when the button is pressed.
+ $('overlay').style.display='none';
+ started=true;ignition=true;handbrake=false;crashed=false;
+ $('ignition').textContent='ON';
+ $('ignition').classList.add('on');
+ setGear('D');
+};
+
+$('ignition').onclick=()=>{
+ ignition=!ignition;
+ $('ignition').textContent=ignition?'ON':'START';
+ $('ignition').classList.toggle('on',ignition);
+ if(!ignition){speed=0;gas=false;}
+};
+$('park').onclick=()=>{
+ handbrake=!handbrake;
+ $('park').style.borderColor=handbrake?'#ff4b55':'#72ffc5';
 };
 
 function hold(id,fn){
- const el=document.getElementById(id);
+ const el=$(id);
  el.addEventListener('pointerdown',e=>{
   e.preventDefault();el.setPointerCapture(e.pointerId);fn(true);
  });
- for(const ev of ['pointerup','pointercancel','lostpointercapture'])
-  el.addEventListener(ev,()=>fn(false));
+ ['pointerup','pointercancel','lostpointercapture'].forEach(ev=>
+  el.addEventListener(ev,()=>fn(false)));
 }
-hold('accelerator',v=>gas=v);
-hold('brake',v=>braking=v);
+hold('gas',v=>gas=v);
+hold('brake',v=>brake=v);
 
-// Steering wheel follows finger drag and springs back to centre.
-const steering=document.querySelector('#steer');
-let steerPointer=null,steerStart=0;
-steering.addEventListener('pointerdown',e=>{
- steerPointer=e.pointerId;steerStart=e.clientX;
- steering.setPointerCapture(e.pointerId);
+// Steering wheel responds to finger dragging
+const sw=$('steer');let pointer=null,origin=0;
+sw.addEventListener('pointerdown',e=>{
+ pointer=e.pointerId;origin=e.clientX;
+ sw.setPointerCapture(e.pointerId);
 });
-steering.addEventListener('pointermove',e=>{
- if(steerPointer!==e.pointerId)return;
- steer=THREE.MathUtils.clamp((e.clientX-steerStart)/45,-1,1);
- steering.style.transform=`rotate(${steer*95}deg)`;
+sw.addEventListener('pointermove',e=>{
+ if(pointer!==e.pointerId)return;
+ steer=THREE.MathUtils.clamp((e.clientX-origin)/42,-1,1);
+ sw.style.transform=`rotate(${steer*90}deg)`;
 });
-function releaseSteering(){
- steerPointer=null;steer=0;steering.style.transform='rotate(0deg)';
+function release(){
+ pointer=null;steer=0;sw.style.transform='rotate(0deg)';
 }
-steering.addEventListener('pointerup',releaseSteering);
-steering.addEventListener('pointercancel',releaseSteering);
-window.addEventListener('blur',()=>{gas=false;braking=false;releaseSteering()});
+sw.addEventListener('pointerup',release);
+sw.addEventListener('pointercancel',release);
+
+// Keyboard controls for testing on a laptop
+window.addEventListener('keydown',e=>{
+ if(e.key==='ArrowLeft')steer=-1;
+ if(e.key==='ArrowRight')steer=1;
+ if(e.key==='ArrowUp')gas=true;
+ if(e.key==='ArrowDown')brake=true;
+});
+window.addEventListener('keyup',e=>{
+ if(['ArrowLeft','ArrowRight'].includes(e.key))release();
+ if(e.key==='ArrowUp')gas=false;
+ if(e.key==='ArrowDown')brake=false;
+});
+
+function drawMirror(){
+ const c=$('rear'),ctx=c.getContext('2d');
+ ctx.fillStyle='#8bb7c4';ctx.fillRect(0,0,c.width,c.height);
+ ctx.fillStyle='#4b7656';ctx.fillRect(0,50,c.width,34);
+ ctx.fillStyle='#45484e';
+ ctx.beginPath();ctx.moveTo(70,84);ctx.lineTo(112,0);ctx.lineTo(148,0);ctx.lineTo(195,84);ctx.fill();
+ ctx.strokeStyle='#f7edcf';ctx.setLineDash([8,8]);ctx.beginPath();
+ ctx.moveTo(130,84);ctx.lineTo(130,0);ctx.stroke();ctx.setLineDash([]);
+ for(const t of traffic){
+  const y=68+(t.z+125)*.25;
+  if(y>0&&y<78){
+   const x=130+t.lane*5;
+   ctx.fillStyle='#252a32';ctx.fillRect(x-6,y,12,8);
+   ctx.fillStyle='#ff5252';ctx.fillRect(x-5,y+5,3,2);ctx.fillRect(x+2,y+5,3,2);
+  }
+ }
+}
 
 function update(dt){
- if(!driving||!ignition)return;
+ if(!started)return;
 
- if(gas&&!handbrake){
-  if(gear==='D')speed=Math.min(300,speed+42*dt);
-  if(gear==='R')speed=Math.max(-25,speed-14*dt);
- }else if(braking||handbrake||gear==='P'){
-  speed=Math.abs(speed)<1?0:speed-Math.sign(speed)*65*dt;
- }else if(gear==='N'){
-  speed*=Math.pow(.992,dt*60);
+ if(ignition&&!handbrake){
+  if(gas&&gear==='D')speed=Math.min(300,speed+38*dt);
+  else if(gas&&gear==='R')speed=Math.max(-25,speed-13*dt);
+  else if(brake)speed=Math.max(0,speed-85*dt);
+  else if(gear==='P')speed=0;
+  else speed*=Math.pow(.996,dt*60);
  }else{
-  speed*=Math.pow(.997,dt*60);
+  speed=Math.max(0,speed-100*dt);
  }
+ if(handbrake)speed=Math.max(0,speed-110*dt);
 
- if(handbrake&&Math.abs(speed)<1)speed=0;
- rpm=ignition?(speed===0?(gas?1200:750):Math.min(7500,850+Math.abs(speed)*22)):0;
-
+ rpm=ignition?(speed===0?(gas?1600:800):850+speed*20):0;
+ trip+=Math.abs(speed)*dt/3600;
  const movement=speed*.075*dt;
- distance+=Math.abs(speed)*dt/3600;
- roadOffset+=movement;
+ carX+=steer*(1+speed*.018)*dt;
+ carX=THREE.MathUtils.clamp(carX,-7,7);
+ player.position.x+=(carX-player.position.x)*.2;
+ player.rotation.y=-steer*.13;
+ wheels.forEach(w=>w.rotation.x+=movement*2);
 
- carX+=steer*(.9+Math.abs(speed)*.015)*dt;
- carX=THREE.MathUtils.clamp(carX,-4.4,4.4);
-
- player.position.x+=(carX-player.position.x)*.18;
- player.rotation.y=-steer*.14;
- wheelMeshes.forEach(w=>w.rotation.x+=movement*2);
-
- roadMarks.forEach(m=>{m.position.z+=movement;if(m.position.z>35)m.position.z-=432});
- buildings.forEach(o=>{o.b.position.z+=movement;if(o.b.position.z>40)o.b.position.z-=396});
-
- spawnTimer+=dt;
- if(spawnTimer>Math.max(.65,2.4-Math.abs(speed)/180)){
-  spawnTraffic();spawnTimer=0;
- }
-
- for(let i=traffic.length-1;i>=0;i--){
-  const t=traffic[i];
-  t.z+=movement;
-  t.car.position.z=t.z;
-
-  // Collision
-  if(Math.abs(t.z-2)<2.8&&Math.abs(t.lane-carX)<1.65){
-   speed=0;gas=false;
-   document.querySelector('#message').textContent='Collision! Drive carefully.';
-  }
-  if(t.z>24){
-   scene.remove(t.car);traffic.splice(i,1);
-  }
- }
-
- document.querySelector('#speed').textContent=Math.round(Math.abs(speed));
- document.querySelector('#rpm').textContent=Math.round(rpm)+' RPM';
- document.querySelector('#distance').textContent=distance.toFixed(1)+' km';
-}
-
-function renderMirrors(){
- // Rear view from behind the car, looking backwards along the road.
- rearCamera.position.set(carX,2.4,7);
- rearCamera.lookAt(carX,1,45);
- mirrorRenderer.render(scene,rearCamera);
-
- sideCanvases.forEach(({r,cam,side})=>{
-  cam.position.set(carX+side*1.1,1.7,3);
-  cam.lookAt(carX+side*10,1,24);
-  r.render(scene,cam);
+ marks.forEach(m=>{m.position.z+=movement;if(m.position.z>30)m.position.z-=490});
+ buildings.forEach(o=>{
+  o.b.position.z+=movement;
+  if(o.b.position.z>35)o.b.position.z-=459;
  });
+
+ // Leaving the road causes a collision and stops the car.
+ if(Math.abs(carX)>5.9&&speed>5){
+  speed=0;gas=false;carX=Math.sign(carX)*5.8;
+  $('status').textContent='Roadside collision! Steer back onto the road.';
+  crashed=true;
+ }
+
+ spawnTime+=dt;
+ if(spawnTime>Math.max(.65,2.3-speed/200)){
+  spawn();spawnTime=0;
+ }
+ for(let i=traffic.length-1;i>=0;i--){
+  const t=traffic[i];t.z+=movement;t.car.position.z=t.z;
+  if(Math.abs(t.z-3)<2.5&&Math.abs(t.lane-carX)<1.6){
+   speed=0;gas=false;
+   $('status').textContent='Traffic collision! Press ENTER DRIVE to continue.';
+   crashed=true;
+  }
+  if(t.z>20){scene.remove(t.car);traffic.splice(i,1);}
+ }
+
+ $('speed').textContent=Math.round(Math.abs(speed));
+ $('rpm').textContent=Math.round(rpm);
+ $('trip').textContent=trip.toFixed(1);
 }
 
 function animate(now){
@@ -460,14 +378,10 @@ function animate(now){
  const dt=Math.min((now-last)/1000,.04);last=now;
  update(dt);
 
- camera.position.set(
-  carX*.7,
-  4.4+Math.abs(speed)*.002,
-  10.5
- );
- camera.lookAt(carX*.4,1,-13);
+ camera.position.set(carX*.55,4.4,10.5);
+ camera.lookAt(carX*.25,1,-13);
  renderer.render(scene,camera);
- renderMirrors();
+ drawMirror();
 }
 requestAnimationFrame(animate);
 

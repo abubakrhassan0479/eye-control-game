@@ -3,229 +3,325 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Eye Control Game</title>
-
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>3D Car Racing</title>
 <style>
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  background: #101522;
-  color: white;
-  font-family: Arial, sans-serif;
-  text-align: center;
-}
-h2 { color: #61f5c5; }
-button {
-  padding: 13px 22px;
-  border: 0;
-  border-radius: 12px;
-  background: #61f5c5;
-  color: #101522;
-  font-size: 16px;
-  font-weight: bold;
-  margin: 8px;
-}
-#camera {
-  width: 190px;
-  max-width: 45%;
-  border-radius: 15px;
-  transform: scaleX(-1);
-  background: #252c3b;
-}
-#game {
-  display: block;
-  width: 94%;
-  max-width: 600px;
-  margin: 12px auto;
-  border: 2px solid #61f5c5;
-  border-radius: 14px;
-  background: #202b40;
-}
-#status { color: #ffd166; padding: 8px; }
-.small { color: #b8c3d9; font-size: 13px; }
+*{box-sizing:border-box}
+body{margin:0;background:#101722;color:white;font-family:Arial;overflow:hidden}
+#game{position:fixed;inset:0;width:100%;height:100%;display:block}
+#ui{position:fixed;inset:0;pointer-events:none}
+.top{display:flex;justify-content:space-between;gap:6px;padding:12px}
+.card{background:#101722df;padding:10px 13px;border:1px solid #54f3c0;border-radius:12px;font-size:13px}
+.card b{color:#54f3c0;font-size:19px}
+#menu{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);width:min(90%,340px);background:#111c2aef;padding:22px;border:1px solid #54f3c0;border-radius:18px;text-align:center;pointer-events:auto}
+h2{color:#54f3c0;margin:4px}
+button,select{border:0;border-radius:10px;padding:12px;margin:4px;font-weight:bold;font-size:14px}
+button{background:#54f3c0;color:#10202a}
+select{background:#29394c;color:white;width:100%}
+#controls{position:absolute;bottom:12px;width:100%;display:flex;justify-content:space-between;align-items:end;padding:0 12px;gap:8px}
+.group{display:flex;gap:6px;align-items:end}
+.ctrl{width:66px;height:62px;font-size:13px;background:#162638eF;color:white;border:1px solid #54f3c0;touch-action:none}
+.pedal{width:76px;height:75px;background:#54f3c0;color:#101722;touch-action:none}
+#brake{background:#f05c68;color:white}
+#gear{width:70px;height:42px}
+#hint{font-size:12px;color:#c7d4e5;line-height:1.5}
+#msg{color:#ffd166;font-size:13px;min-height:18px}
 </style>
 </head>
-
 <body>
-<h2>👁 Eye Control Game</h2>
-<p>Control the ball with your eyes!</p>
+<canvas id="game"></canvas>
+<div id="ui">
+  <div class="top">
+    <div class="card">SPEED<br><b id="speed">0</b> km/h</div>
+    <div class="card">DISTANCE<br><b id="dist">0</b> m</div>
+    <div class="card">SCORE<br><b id="score">0</b></div>
+  </div>
 
-<video id="camera" autoplay playsinline muted></video>
-<p id="status">Press Start Camera to begin.</p>
+  <div id="menu">
+    <h2>🏎️ 3D STREET RACING</h2>
+    <p>Choose your car and hit the road!</p>
+    <select id="car">
+      <option value="0">Blue Sports Car</option>
+      <option value="1">Red Supercar</option>
+      <option value="2">Yellow Taxi</option>
+      <option value="3">Police Cruiser</option>
+      <option value="4">Green Racer</option>
+    </select>
+    <p id="msg">Ready to race?</p>
+    <button id="start">▶ START RACE</button>
+    <button id="resume" style="display:none">▶ RESUME</button>
+    <button id="restart">↻ RESTART</button>
+    <p id="hint">Avoid traffic. Use steering and pedals to drive.</p>
+  </div>
 
-<button id="start">Start Camera</button>
-<button id="reset">Reset Game</button>
+  <div id="controls">
+    <div class="group">
+      <button class="ctrl" id="left">◀<br>LEFT</button>
+      <button class="ctrl" id="right">▶<br>RIGHT</button>
+    </div>
+    <div class="group">
+      <div>
+        <select id="gear">
+          <option value="D">D</option>
+          <option value="R">R</option>
+          <option value="N">N</option>
+          <option value="P">P</option>
+        </select>
+        <button class="ctrl" id="pause">Ⅱ PAUSE</button>
+      </div>
+      <button class="pedal" id="brake">BRAKE</button>
+      <button class="pedal" id="gas">▲ GAS</button>
+    </div>
+  </div>
+</div>
 
-<canvas id="game" width="600" height="350"></canvas>
+<script type="module">
+import * as THREE from
+'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
 
-<p class="small">
-Look LEFT or RIGHT to move the ball.<br>
-Allow camera permission when asked.
-</p>
+const canvas=document.querySelector('#game');
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x91c8ef);
+scene.fog=new THREE.Fog(0x91c8ef,55,190);
 
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,300);
+camera.position.set(0,5.2,10);
+camera.lookAt(0,0,0);
 
-<script>
-const video = document.getElementById("camera");
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-const statusText = document.getElementById("status");
-const startBtn = document.getElementById("start");
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 
-let ballX = 300;
-let ballY = 285;
-let targetX = 300;
-let tracking = false;
-let faceMesh;
-let busy = false;
-let cameraStream;
+scene.add(new THREE.HemisphereLight(0xe2f4ff,0x47603d,2));
+const sun=new THREE.DirectionalLight(0xffffff,2.5);
+sun.position.set(-8,16,8);
+sun.castShadow=true;
+scene.add(sun);
 
-function drawGame() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Ground
-  ctx.fillStyle = "#35435c";
-  ctx.fillRect(0, 315, 600, 35);
-
-  // Targets
-  ctx.fillStyle = "#ffcc66";
-  ctx.fillRect(80, 285, 35, 30);
-  ctx.fillRect(485, 285, 35, 30);
-
-  // Ball
-  ctx.beginPath();
-  ctx.arc(ballX, ballY, 19, 0, Math.PI * 2);
-  ctx.fillStyle = "#61f5c5";
-  ctx.shadowColor = "#61f5c5";
-  ctx.shadowBlur = 15;
-  ctx.fill();
-  ctx.shadowBlur = 0;
-
-  // Instructions
-  ctx.fillStyle = "white";
-  ctx.font = "18px Arial";
-  ctx.fillText("LOOK LEFT  ←       →  LOOK RIGHT", 125, 40);
-  ctx.font = "14px Arial";
-  ctx.fillText("Move your eyes to control the ball", 165, 65);
-
-  // Movement
-  ballX += (targetX - ballX) * 0.12;
-  requestAnimationFrame(drawGame);
+function mat(color,roughness=.8){
+ return new THREE.MeshStandardMaterial({color,roughness});
 }
-drawGame();
+const grass=mat(0x4a9a51), asphalt=mat(0x333943);
+const white=mat(0xffffff), yellow=mat(0xffd64a);
+const dark=mat(0x172331), glass=mat(0x8fd6ef,.25);
 
-document.getElementById("reset").onclick = () => {
-  ballX = 300;
-  targetX = 300;
+function box(parent,x,y,z,w,h,d,material){
+ const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);
+ o.position.set(x,y,z);
+ o.castShadow=true;o.receiveShadow=true;
+ parent.add(o);return o;
+}
+
+box(scene,0,-.25,-75,200,.4,240,grass);
+box(scene,0,-.02,-75,12,.15,240,asphalt);
+box(scene,-6.05,.08,-75,.13,.04,240,white);
+box(scene,6.05,.08,-75,.13,.04,240,white);
+
+const markings=[];
+for(let z=30;z>-220;z-=8){
+ for(const x of [-2,2]){
+  const m=box(scene,x,.075,z,.10,.025,3,white);
+  markings.push(m);
+ }
+}
+
+// Buildings along both sides of the road
+const buildings=[];
+for(let z=20;z>-190;z-=13){
+ for(const side of [-1,1]){
+  const h=5+Math.random()*15;
+  const w=3+Math.random()*4;
+  const colors=[0x647b91,0xd0b99d,0x748c87,0x777b9b,0xc3cbd2];
+  const b=box(scene,side*(10+w/2),h/2,z,w,h,5,
+    mat(colors[Math.floor(Math.random()*colors.length)]));
+  buildings.push(b);
+  for(let yy=2;yy<h-1;yy+=2.5){
+   for(let xx=-w/2+.7;xx<w/2;xx+=1.4){
+    box(scene,side*(10+w/2)+xx,yy,z+2.53,.65,.8,.04,
+      mat(0xa8e5ed));
+   }
+  }
+ }
+}
+
+const colors=[0x13bff2,0xf12e48,0xffd447,0xf4f4f4,0x36dc83];
+function makeCar(color,type=0){
+ const g=new THREE.Group();
+ box(g,0,.65,0,1.65,.55,3.1,mat(color));
+ box(g,0,1.08,-.25,1.25,.65,1.55,glass);
+ box(g,0,1.07,-.23,1.28,.09,1.65,dark);
+ for(const x of [-.83,.83]){
+  for(const z of [-.95,.95]){
+   const wheel=new THREE.Mesh(
+    new THREE.CylinderGeometry(.32,.32,.19,16),
+    mat(0x17191d));
+   wheel.rotation.z=Math.PI/2;
+   wheel.position.set(x,.34,z);
+   g.add(wheel);
+  }
+  box(g,x*.7,.68,1.57,.24,.17,.06,mat(0xfff0ae));
+  box(g,x*.7,.68,-1.57,.24,.17,.06,mat(0xff3030));
+ }
+ if(type===2){
+  box(g,0,1.48,0,.65,.12,.6,yellow);
+ }
+ if(type===3){
+  box(g,0,1.5,-.15,.6,.12,.35,mat(0xff3c48));
+  box(g,.2,1.5,-.15,.25,.12,.35,mat(0x36aaff));
+ }
+ if(type===4){
+  box(g,0,.98,-1.3,1.8,.15,.35,mat(0xffffff));
+ }
+ return g;
+}
+
+let selected=0;
+let player=makeCar(colors[0],0);
+player.position.set(0,0,3);
+scene.add(player);
+
+function selectCar(){
+ selected=Number(document.querySelector('#car').value);
+ scene.remove(player);
+ player=makeCar(colors[selected],selected);
+ player.position.set(carX,0,3);
+ scene.add(player);
+}
+document.querySelector('#car').onchange=selectCar;
+
+const traffic=[];
+function spawnTraffic(){
+ const lanes=[-4,0,4];
+ const lane=lanes[Math.floor(Math.random()*lanes.length)];
+ const type=Math.floor(Math.random()*5);
+ const car=makeCar(colors[type],type);
+ car.scale.setScalar(.85);
+ car.position.set(lane,0,-95);
+ scene.add(car);
+ traffic.push({car,z:-95,lane,type,passed:false});
+}
+
+let carX=0,speed=0,distance=0,score=0;
+let running=false,paused=false,gas=false,brake=false;
+let steer=0,spawnClock=0,last=performance.now();
+
+const $=id=>document.getElementById(id);
+function start(){
+ if(!running&&!paused){
+  speed=0;distance=0;score=0;carX=0;
+  traffic.forEach(t=>scene.remove(t.car));
+  traffic.length=0;
+  player.position.x=0;
+ }
+ running=true;paused=false;
+ $('menu').style.display='none';
+}
+$('start').onclick=start;
+$('restart').onclick=()=>{
+ running=false;paused=false;speed=0;distance=0;score=0;
+ carX=0;
+ traffic.forEach(t=>scene.remove(t.car));
+ traffic.length=0;
+ $('menu').style.display='block';
+ $('resume').style.display='none';
+ $('start').style.display='inline-block';
+ $('msg').textContent='Ready to race!';
+};
+$('pause').onclick=()=>{
+ if(running){
+  running=false;paused=true;
+  $('menu').style.display='block';
+  $('start').style.display='none';
+  $('resume').style.display='inline-block';
+  $('msg').textContent='Race paused';
+ }
+};
+$('resume').onclick=()=>{
+ if(paused){running=true;paused=false;$('menu').style.display='none';}
 };
 
-async function startCamera() {
-  startBtn.disabled = true;
-  statusText.textContent = "Loading face-tracking system...";
-
-  try {
-    if (!window.FaceMesh) {
-      throw new Error("Face tracking library could not load. Check your internet.");
-    }
-
-    cameraStream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: "user",
-        width: { ideal: 640 },
-        height: { ideal: 480 }
-      },
-      audio: false
-    });
-
-    video.srcObject = cameraStream;
-    await video.play();
-
-    faceMesh = new FaceMesh({
-      locateFile: file =>
-        "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/" + file
-    });
-
-    faceMesh.setOptions({
-      maxNumFaces: 1,
-      refineLandmarks: true,
-      minDetectionConfidence: 0.6,
-      minTrackingConfidence: 0.6
-    });
-
-    faceMesh.onResults(results => {
-      if (results.multiFaceLandmarks &&
-          results.multiFaceLandmarks.length > 0) {
-
-        const p = results.multiFaceLandmarks[0];
-
-        // Iris landmarks and eye corners
-        const leftIris = p[468];
-        const rightIris = p[473];
-
-        const leftOuter = p[33];
-        const leftInner = p[133];
-        const rightInner = p[362];
-        const rightOuter = p[263];
-
-        if (!leftIris || !rightIris) {
-          statusText.textContent =
-            "Face found. Eye tracking is not available.";
-          return;
-        }
-
-        const leftRatio =
-          (leftIris.x - leftOuter.x) /
-          (leftInner.x - leftOuter.x);
-
-        const rightRatio =
-          (rightIris.x - rightInner.x) /
-          (rightOuter.x - rightInner.x);
-
-        const gaze = (leftRatio + rightRatio) / 2;
-
-        // Calibrated approximate horizontal eye movement
-        const clamped = Math.max(0, Math.min(1, gaze));
-        targetX = 40 + clamped * 520;
-
-        statusText.textContent =
-          "Face detected! Eye tracking active.";
-        tracking = true;
-
-      } else {
-        statusText.textContent =
-          "Face not detected. Face the camera in good light.";
-        tracking = false;
-      }
-    });
-
-    async function trackFrame() {
-      if (video.readyState >= 2 && !busy) {
-        busy = true;
-        try {
-          await faceMesh.send({ image: video });
-        } catch (e) {
-          console.log(e);
-        }
-        busy = false;
-      }
-      if (cameraStream && cameraStream.active) {
-        requestAnimationFrame(trackFrame);
-      }
-    }
-
-    statusText.textContent = "Camera started. Detecting eyes...";
-    trackFrame();
-
-  } catch (err) {
-    statusText.textContent =
-      "Error: " + err.message +
-      " — Open this page in a browser that supports camera access.";
-    startBtn.disabled = false;
-  }
+function hold(id,onChange){
+ const el=$(id);
+ el.addEventListener('pointerdown',e=>{
+  e.preventDefault();el.setPointerCapture(e.pointerId);onChange(true);
+ });
+ for(const ev of ['pointerup','pointercancel','lostpointercapture'])
+  el.addEventListener(ev,()=>onChange(false));
 }
+hold('left',v=>steer=v?-1:0);
+hold('right',v=>steer=v?1:0);
+hold('gas',v=>gas=v);
+hold('brake',v=>brake=v);
+window.addEventListener('blur',()=>{gas=false;brake=false;steer=0});
 
-startBtn.onclick = startCamera;
+function animate(now){
+ requestAnimationFrame(animate);
+ const dt=Math.min((now-last)/16.67,2);last=now;
+
+ if(running){
+  const gear=$('gear').value;
+  if(gas&&gear==='D')speed=Math.min(150,speed+.65*dt);
+  else if(gas&&gear==='R')speed=Math.max(-25,speed-.25*dt);
+  else if(brake)speed+=speed>0?-.95*dt:.8*dt;
+  else speed*=Math.pow(.994,dt);
+  if(gear==='P'||gear==='N')speed*=Math.pow(.90,dt);
+
+  carX+=steer*(.10+Math.abs(speed)*.0014)*dt;
+  carX=THREE.MathUtils.clamp(carX,-4.5,4.5);
+  player.position.x=carX;
+  player.rotation.z=-steer*.08;
+
+  const movement=speed*.045*dt;
+  distance+=Math.abs(speed)*dt/450;
+  score=Math.floor(distance*10);
+
+  markings.forEach(m=>{m.position.z+=movement;if(m.position.z>35)m.position.z-=248});
+  buildings.forEach(b=>{b.position.z+=movement;if(b.position.z>35)b.position.z-=221});
+  spawnClock+=dt;
+  if(spawnClock>Math.max(24,75-speed*.25)){
+   spawnTraffic();spawnClock=0;
+  }
+
+  for(let i=traffic.length-1;i>=0;i--){
+   const t=traffic[i];
+   t.z+=movement;
+   t.car.position.z=t.z;
+
+   if(t.z>12){
+    if(!t.passed){score+=5;t.passed=true}
+    scene.remove(t.car);traffic.splice(i,1);continue;
+   }
+
+   if(Math.abs(t.z-3)<2.2&&Math.abs(t.lane-carX)<1.45){
+    speed=0;running=false;paused=false;
+    $('menu').style.display='block';
+    $('start').style.display='inline-block';
+    $('resume').style.display='none';
+    $('msg').textContent='🚧 Collision! Press RESTART to try again.';
+   }
+  }
+ }
+
+ $('speed').textContent=Math.round(Math.abs(speed));
+ $('dist').textContent=Math.floor(distance);
+ $('score').textContent=score;
+
+ camera.position.x+=(carX*.42-camera.position.x)*.06;
+ camera.position.y=5.2;
+ camera.position.z=10;
+ camera.lookAt(carX*.2,.3,-5);
+
+ renderer.render(scene,camera);
+}
+requestAnimationFrame(animate);
+
+window.addEventListener('resize',()=>{
+ camera.aspect=innerWidth/innerHeight;
+ camera.updateProjectionMatrix();
+ renderer.setSize(innerWidth,innerHeight);
+});
 </script>
 </body>
 </html>

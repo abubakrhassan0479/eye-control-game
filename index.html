@@ -1,0 +1,231 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eye Control Game</title>
+
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #101522;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+h2 { color: #61f5c5; }
+button {
+  padding: 13px 22px;
+  border: 0;
+  border-radius: 12px;
+  background: #61f5c5;
+  color: #101522;
+  font-size: 16px;
+  font-weight: bold;
+  margin: 8px;
+}
+#camera {
+  width: 190px;
+  max-width: 45%;
+  border-radius: 15px;
+  transform: scaleX(-1);
+  background: #252c3b;
+}
+#game {
+  display: block;
+  width: 94%;
+  max-width: 600px;
+  margin: 12px auto;
+  border: 2px solid #61f5c5;
+  border-radius: 14px;
+  background: #202b40;
+}
+#status { color: #ffd166; padding: 8px; }
+.small { color: #b8c3d9; font-size: 13px; }
+</style>
+</head>
+
+<body>
+<h2>👁 Eye Control Game</h2>
+<p>Control the ball with your eyes!</p>
+
+<video id="camera" autoplay playsinline muted></video>
+<p id="status">Press Start Camera to begin.</p>
+
+<button id="start">Start Camera</button>
+<button id="reset">Reset Game</button>
+
+<canvas id="game" width="600" height="350"></canvas>
+
+<p class="small">
+Look LEFT or RIGHT to move the ball.<br>
+Allow camera permission when asked.
+</p>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+
+<script>
+const video = document.getElementById("camera");
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const statusText = document.getElementById("status");
+const startBtn = document.getElementById("start");
+
+let ballX = 300;
+let ballY = 285;
+let targetX = 300;
+let tracking = false;
+let faceMesh;
+let busy = false;
+let cameraStream;
+
+function drawGame() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Ground
+  ctx.fillStyle = "#35435c";
+  ctx.fillRect(0, 315, 600, 35);
+
+  // Targets
+  ctx.fillStyle = "#ffcc66";
+  ctx.fillRect(80, 285, 35, 30);
+  ctx.fillRect(485, 285, 35, 30);
+
+  // Ball
+  ctx.beginPath();
+  ctx.arc(ballX, ballY, 19, 0, Math.PI * 2);
+  ctx.fillStyle = "#61f5c5";
+  ctx.shadowColor = "#61f5c5";
+  ctx.shadowBlur = 15;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Instructions
+  ctx.fillStyle = "white";
+  ctx.font = "18px Arial";
+  ctx.fillText("LOOK LEFT  ←       →  LOOK RIGHT", 125, 40);
+  ctx.font = "14px Arial";
+  ctx.fillText("Move your eyes to control the ball", 165, 65);
+
+  // Movement
+  ballX += (targetX - ballX) * 0.12;
+  requestAnimationFrame(drawGame);
+}
+drawGame();
+
+document.getElementById("reset").onclick = () => {
+  ballX = 300;
+  targetX = 300;
+};
+
+async function startCamera() {
+  startBtn.disabled = true;
+  statusText.textContent = "Loading face-tracking system...";
+
+  try {
+    if (!window.FaceMesh) {
+      throw new Error("Face tracking library could not load. Check your internet.");
+    }
+
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: "user",
+        width: { ideal: 640 },
+        height: { ideal: 480 }
+      },
+      audio: false
+    });
+
+    video.srcObject = cameraStream;
+    await video.play();
+
+    faceMesh = new FaceMesh({
+      locateFile: file =>
+        "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/" + file
+    });
+
+    faceMesh.setOptions({
+      maxNumFaces: 1,
+      refineLandmarks: true,
+      minDetectionConfidence: 0.6,
+      minTrackingConfidence: 0.6
+    });
+
+    faceMesh.onResults(results => {
+      if (results.multiFaceLandmarks &&
+          results.multiFaceLandmarks.length > 0) {
+
+        const p = results.multiFaceLandmarks[0];
+
+        // Iris landmarks and eye corners
+        const leftIris = p[468];
+        const rightIris = p[473];
+
+        const leftOuter = p[33];
+        const leftInner = p[133];
+        const rightInner = p[362];
+        const rightOuter = p[263];
+
+        if (!leftIris || !rightIris) {
+          statusText.textContent =
+            "Face found. Eye tracking is not available.";
+          return;
+        }
+
+        const leftRatio =
+          (leftIris.x - leftOuter.x) /
+          (leftInner.x - leftOuter.x);
+
+        const rightRatio =
+          (rightIris.x - rightInner.x) /
+          (rightOuter.x - rightInner.x);
+
+        const gaze = (leftRatio + rightRatio) / 2;
+
+        // Calibrated approximate horizontal eye movement
+        const clamped = Math.max(0, Math.min(1, gaze));
+        targetX = 40 + clamped * 520;
+
+        statusText.textContent =
+          "Face detected! Eye tracking active.";
+        tracking = true;
+
+      } else {
+        statusText.textContent =
+          "Face not detected. Face the camera in good light.";
+        tracking = false;
+      }
+    });
+
+    async function trackFrame() {
+      if (video.readyState >= 2 && !busy) {
+        busy = true;
+        try {
+          await faceMesh.send({ image: video });
+        } catch (e) {
+          console.log(e);
+        }
+        busy = false;
+      }
+      if (cameraStream && cameraStream.active) {
+        requestAnimationFrame(trackFrame);
+      }
+    }
+
+    statusText.textContent = "Camera started. Detecting eyes...";
+    trackFrame();
+
+  } catch (err) {
+    statusText.textContent =
+      "Error: " + err.message +
+      " — Open this page in a browser that supports camera access.";
+    startBtn.disabled = false;
+  }
+}
+
+startBtn.onclick = startCamera;
+</script>
+</body>
+</html>
